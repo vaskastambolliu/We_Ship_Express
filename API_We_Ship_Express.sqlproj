@@ -65,13 +65,13 @@
     <Compile Include="SqlStoredProcedure.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\API_Ship_v1\packages\Newtonsoft.Json.dll\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\API_Ship_v1\packages\Newtonsoft.Json.dll\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include="lib\File.dll" />
@@ -80,5 +80,6 @@
     <None Include="lib\Newtonsoft.Json.xml" />
     <None Include="lib\System.Runtime.Serialization.Json.dll" />
     <None Include="lib\System.ServiceModel.Internals.dll" />
+    <None Include="sqltest.txt" />
   </ItemGroup>
 </Project>

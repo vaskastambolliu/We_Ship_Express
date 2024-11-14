@@ -96,7 +96,7 @@ namespace API_We_Ship_Express
         public string ReferenceId { get; set; }
 
         [JsonProperty("deliveryTargetDate")]
-        public long DeliveryTargetDate { get; set; }
+        public int DeliveryTargetDate { get; set; }
 
         [JsonProperty("deliveryTargetTime")]
         public string DeliveryTargetTime { get; set; }
