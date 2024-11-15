@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using API_We_Ship_Express;
 using System.Collections.Generic;
+using System.Net.Http;
 
 namespace WEShipExpress_20241111
 {
@@ -106,45 +107,206 @@ namespace WEShipExpress_20241111
 
                         // Parse JSON response and populate trackingData
                         //var jsonObject = new JObject();
-
+                        var jsonObject = JObject.Parse(responseStr);
+                        SendLongMessage("jsonObject: " + jsonObject);
                         try
                         {
 
-                            //var jsonObject = JObject.Parse(responseStr);
-                            //SqlContext.Pipe.Send("arr: " + arr);
-
-                            SendLongMessage("responseStr: " + responseStr);
-
-                            // Only parse the JSON to check the root-level properties
-                            var jsonObjecta = JObject.Parse(responseStr);
-                            SendLongMessage("jsonObject: " + jsonObjecta);
-
-                            // Check if the JSON string represents an array or an object
-                            JToken jsonToken = JToken.Parse(responseStr);
-                            SendLongMessage("jsonToken: " + jsonToken);
-
-                            if (jsonToken is JArray jsonArray)
+                            JToken labelUrlToken;
+                            if (jsonObject.TryGetValue("labelUrl", out labelUrlToken))
                             {
-                                SendLongMessage("Parsed JSON as an array");
-                                // Handle JSON array
-                                foreach (var item in jsonArray)
+                                if (labelUrlToken.Type == JTokenType.String)
                                 {
-                                    SendLongMessage("Array item: " + item.ToString());
+                                    var urlString = labelUrlToken.ToString();
+                                    if (!string.IsNullOrEmpty(urlString))
+                                    {
+                                        jsonObject["labelUrl"] = new JArray(urlString);
+                                    }
+                                    else
+                                    {
+                                        jsonObject["labelUrl"] = new JArray(); // Empty string case
+                                    }
                                 }
-                            }
-                            else if (jsonToken is JObject jsonObject)
-                            {
-                                SendLongMessage("Parsed JSON as an object");
-                                // Handle JSON object
-                                foreach (var property in jsonObject.Properties())
+                                else if (labelUrlToken.Type == JTokenType.Array)
                                 {
-                                    SendLongMessage($"Property: {property.Name}, Value: {property.Value}");
+                                    // If it's an array, do nothing, it's already correct
+                                }
+                                else
+                                {
+                                    jsonObject["labelUrl"] = new JArray(); // Handle empty or other cases
                                 }
                             }
                             else
                             {
-                                SendLongMessage("Unknown JSON structure");
+                                jsonObject["labelUrl"] = new JArray(); // Handle case where LabelURL is missing
                             }
+
+                            // Convert back to JSON string
+                            responseStr = jsonObject.ToString(Formatting.Indented);
+
+
+                            // Deserialize the JSON into a dynamic object
+                            var responseObject = JsonConvert.DeserializeObject<ResponseObject>(responseStr);
+                            SendLongMessage("responseObject: " + responseObject);
+
+
+
+
+                            // Create a new DataRow
+                            DataRow row = trackingData.NewRow();
+
+                            // Populate the DataRow with the deserialized data
+                            row["Id"] = responseObject.responseObject.orderNumber.id;
+                            SendLongMessage("Id: " + responseObject.responseObject.orderNumber.id);
+
+                            row["CreatedOn"] = responseObject.responseObject.orderInfo.createdOn;
+                            SendLongMessage("CreatedOn: " + responseObject.responseObject.orderInfo.createdOn);
+
+                            row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            SendLongMessage("UpdatedOn: " + responseObject.responseObject.orderInfo.updatedOn);
+                            row["ParentOrder"] = responseObject.responseObject.orderInfo.parentOrder;
+                            row["OrderType"] = responseObject.responseObject.orderInfo.orderType;
+                            row["OrderTypeDesc"] = responseObject.responseObject.orderInfo.orderTypeDesc;
+                            row["Status"] = responseObject.responseObject.orderInfo.status;
+                            row["OrderStatusDesc"] = responseObject.responseObject.orderInfo.orderStatusDesc;
+                            row["AccountId"] = responseObject.responseObject.orderInfo.accountId;
+                            row["ClientName"] = responseObject.responseObject.orderInfo.clientName;
+                            row["CompanyName"] = responseObject.responseObject.orderInfo.companyName;
+                            row["ShipperId"] = responseObject.responseObject.orderInfo.shipperId;
+                            row["WarehouseLocation"] = responseObject.responseObject.orderInfo.warehouseLocation;
+                            row["UpdatedBy"] = responseObject.responseObject.orderInfo.updatedBy;
+                            row["TotalQuantity"] = responseObject.responseObject.orderInfo.totalQuantity;
+                            row["TotalWeight"] = responseObject.responseObject.orderInfo.totalWeight;
+                            row["paymentMode"] = responseObject.responseObject.orderInfo.paymentMode;
+                            row["PaymentStatus"] = responseObject.responseObject.orderInfo.paymentStatus;
+                            row["ServiceType"] = responseObject.responseObject.orderInfo.serviceType;
+                            row["ShippingMode"] = responseObject.responseObject.orderInfo.shippingMode;
+                            row["Lob"] = responseObject.responseObject.orderInfo.lob;
+                            row["StoreId"] = responseObject.responseObject.orderInfo.storeId;
+                            row["Channel"] = responseObject.responseObject.additionalInfo.channel;
+                            row["ReferenceId"] = responseObject.responseObject.additionalInfo.referenceId;
+                            row["DeliveryTargetDate"] = responseObject.responseObject.additionalInfo.deliveryTargetDate;
+                            row["DeliveryTargetTime"] = responseObject.responseObject.additionalInfo.deliveryTargetTime;
+                            row["TrackingId"] = responseObject.responseObject.additionalInfo.trackingId;
+                            row["InternalTrackingId"] = responseObject.responseObject.additionalInfo.internalTrackingId;
+                            row["BoxId"] = responseObject.responseObject.additionalInfo.boxId;
+                            row["BoxCount"] = responseObject.responseObject.additionalInfo.boxCount;
+                            row["OrderPod"] = responseObject.responseObject.additionalInfo.orderPod;
+                            row["Carrier"] = responseObject.responseObject.additionalInfo.carrier;
+                            row["LabelPrinted"] = responseObject.responseObject.additionalInfo.labelPrinted;
+                            row["Notification"] = responseObject.responseObject.additionalInfo.notification;
+                            row["CompanyName"] = responseObject.responseObject.additionalInfo.companyName;
+                            row["FacilityName"] = responseObject.responseObject.additionalInfo.facilityName;
+                            row["BeginDate"] = responseObject.responseObject.additionalInfo.beginDate;
+                            row["Reason"] = responseObject.responseObject.additionalInfo.reason;
+                            row["IsAsnGenerated"] = responseObject.responseObject.additionalInfo.isAsnGenerated;
+                            row["OrderState"] = responseObject.responseObject.additionalInfo.orderState;
+                            row["Otm"] = responseObject.responseObject.additionalInfo.otm;
+                            row["CarrierAccountId"] = responseObject.responseObject.additionalInfo.carrierAccountId;
+                            row["ShipmentType"] = responseObject.responseObject.additionalInfo.shipmentType;
+                            row["CustomerId"] = responseObject.responseObject.additionalInfo.customerId;
+                            row["IsFulfilment"] = responseObject.responseObject.additionalInfo.isFulfilment;
+                            row["Label"] = responseObject.responseObject.additionalInfo.label;
+
+                            //TO CONVERT IN BASE64
+                            row["LabelUrl"] = responseObject.responseObject.additionalInfo.labelUrl;
+
+                            if (!string.IsNullOrEmpty(responseObject.responseObject.additionalInfo.labelUrl.ToString()))
+                            {
+                                using (var httpClient = new HttpClient())
+                                {
+                                    // Download the file
+                                    HttpResponseMessage responseurl = await httpClient.GetAsync(responseObject.responseObject.additionalInfo.labelUrl.ToString());
+                                    // Step 1: Download the file
+                                    //var responseurl = await httpClient.GetAsync(responseObject.responseObject.additionalInfo.labelUrl.ToString());
+                                    if (responseurl.IsSuccessStatusCode)
+                                    {
+                                        // Convert file to byte array and then Base64
+                                        byte[] fileBytes = await responseurl.Content.ReadAsByteArrayAsync();
+                                        string base64File = Convert.ToBase64String(fileBytes);
+
+                                        row["LabelUrl"] = base64File;
+                                        SendLongMessage("responseurl: " + base64File);
+
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("Failed to download file from URL.");
+                                        SendLongMessage("responseurl: Failed to download file from URL.");
+                                    }
+                                }
+                            }
+
+
+
+                            row["IsCCP"] = responseObject.responseObject.additionalInfo.isCCP;
+
+                            row["ShipFromName"] = responseObject.responseObject.shipFromInfo.shipFromName;
+                            row["ShipFromAddress"] = responseObject.responseObject.shipFromInfo.shipFromAddress;
+                            row["ShipFromCity"] = responseObject.responseObject.shipFromInfo.shipFromCity;
+                            row["ShipFromState"] = responseObject.responseObject.shipFromInfo.shipFromState;
+                            row["ShipFromCountry"] = responseObject.responseObject.shipFromInfo.shipFromCountry;
+                            row["ShipFromPostalCode"] = responseObject.responseObject.shipFromInfo.shipFromPostalCode;
+                            row["ShipFromEmail"] = responseObject.responseObject.shipFromInfo.shipFromEmail;
+                            row["ShipFromMobile"] = responseObject.responseObject.shipFromInfo.shipFromMobile;
+                            
+                            row["ShipToName"] = responseObject.responseObject.shipToInfo.shipToName;
+                            row["ShipToAddress"] = responseObject.responseObject.shipToInfo.shipToAddress;
+                            row["ShipToAddress2"] = responseObject.responseObject.shipToInfo.shipToAddress2;
+                            row["ShipToCity"] = responseObject.responseObject.shipToInfo.shipToCity;
+                            row["ShipToState"] = responseObject.responseObject.shipToInfo.shipToState;
+                            row["ShipToCountry"] = responseObject.responseObject.shipToInfo.shipToCountry;
+                            row["PostalCode"] = responseObject.responseObject.shipToInfo.postalCode;
+                            row["ShipToEmail"] = responseObject.responseObject.shipToInfo.shipToEmail;
+                            row["ShipToMobile"] = responseObject.responseObject.shipToInfo.shipToMobile;
+
+                            row["BillToName"] = responseObject.responseObject.billToInfo.billToName;
+                            row["BillToAddress"] = responseObject.responseObject.billToInfo.billToAddress;
+                            row["BillToAddress2"] = responseObject.responseObject.billToInfo.billToAddress2;
+                            row["BillToCity"] = responseObject.responseObject.billToInfo.billToCity;
+                            row["BillToState"] = responseObject.responseObject.billToInfo.billToState;
+                            row["BillToCountry"] = responseObject.responseObject.billToInfo.billToCountry;
+                            row["BillToPostal"] = responseObject.responseObject.billToInfo.billToPostal;
+                            row["BillToEmail"] = responseObject.responseObject.billToInfo.billToEmail;
+                            row["BillToMobile"] = responseObject.responseObject.billToInfo.billToMobile;
+
+
+
+                            row["ContainerizedOrder"] = responseObject.responseObject.containerizedOrder;
+                            row["MultiItemOrders"] = responseObject.responseObject.multiItemOrders;
+                            row["ShipstationOrder"] = responseObject.responseObject.shipstationOrder;
+
+
+                            row["UpdateCarrier"] = responseObject.responseObject.updateCarrier;
+                            row["RateCardEnable"] = responseObject.responseObject.rateCardEnable;
+                            row["BatchGenerated"] = responseObject.responseObject.batchGenerated;
+                            row["OrderType"] = responseObject.responseObject.orderInfo.orderType;
+                            row["IcePack"] = responseObject.responseObject.icePack;
+                            row["OrderDate"] = responseObject.responseObject.orderDate;
+                            row["SsPackingSlip"] = responseObject.responseObject.ssPackingSlip;
+                            row["SsShippingLabel"] = responseObject.responseObject.ssShippingLabel;
+                            row["ProductTypeDesc"] = responseObject.responseObject.productTypeDesc;
+                            row["CarrierLabelUrl"] = responseObject.responseObject.carrierLabelUrl;
+                            row["ConnectorEmailStatus"] = responseObject.responseObject.connectorEmailStatus;
+                            row["SkuGroup"] = responseObject.responseObject.skuGroup;
+                            row["Fulfilment"] = responseObject.responseObject.fulfilment;
+
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
+
+
+                            // (add all other field mappings here)
+
+                            // Add the DataRow to the DataTable
+                            trackingData.Rows.Add(row);
 
                         }
                         catch (Exception ex)
@@ -155,85 +317,12 @@ namespace WEShipExpress_20241111
                             throw;
                         }
 
-
-
-
-
-
-                        // Ensure LabelURL is always an array
-                        //try
-                        //{
-                        //    JToken labelUrlToken;
-                        //    if (jsonObject.TryGetValue("labelUrl", out labelUrlToken))
-                        //    {
-                        //        if (labelUrlToken.Type == JTokenType.String)
-                        //        {
-                        //            var urlString = labelUrlToken.ToString();
-                        //            if (!string.IsNullOrEmpty(urlString))
-                        //            {
-                        //                jsonObject["labelUrl"] = new JArray(urlString);
-                        //            }
-                        //            else
-                        //            {
-                        //                jsonObject["labelUrl"] = new JArray(); // Empty string case
-                        //            }
-                        //        }
-                        //        else if (labelUrlToken.Type == JTokenType.Array)
-                        //        {
-                        //            // If it's an array, do nothing, it's already correct
-                        //        }
-                        //        else
-                        //        {
-                        //            jsonObject["labelUrl"] = new JArray(); // Handle empty or other cases
-                        //        }
-                        //    }
-                        //    else
-                        //    {
-                        //        jsonObject["labelUrl"] = new JArray(); // Handle case where LabelURL is missing
-                        //    }
-
-
-                        //    SqlContext.Pipe.Send("labelUrl: " + jsonObject["labelUrl"]);
-                        //}
-                        //catch (Exception ex)
-                        //{
-
-                        //    SqlContext.Pipe.Send("labelUrl ex: " + jsonObject["labelUrl"]);
-                        //    HandleGeneralException(ex);
-                        //    throw;
-                        //}
-
-
-
-
-                        // Convert back to JSON string
-
-                        //try
-                        //{
-
-                        //    responseStr = jsonObject.ToString(Formatting.Indented);
-                        //    SqlContext.Pipe.Send("responseStr: " + responseStr);
-                        //}
-                        //catch (Exception ex)
-                        //{
-
-                        //    SqlContext.Pipe.Send("responseStr ex: " + ex.Message);
-                        //    HandleGeneralException(ex);
-                        //    throw;
-                        //}
-
-
-                        //var ship = JsonConvert.DeserializeObject<ResponseObject>(responseStr);
-
-                        //DataRow row = trackingData.NewRow();
-                        //row["LabelUrl"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["labelUrl"];
-                        //SqlContext.Pipe.Send("LabelUrl: " + row["LabelUrl"]);
-
                     }
                     else
                     {
                         HandleErrorResponse(response);
                     }
+
                 }
                 catch (WebException ex)
                 {
@@ -244,9 +333,62 @@ namespace WEShipExpress_20241111
                     response?.Close();
                 }
 
-                // Send data to SQL stored procedure
-                SqlContext.Pipe.Send("InsertDataToDatabase: " + response.StatusCode);
-                InsertDataToDatabase(trackingData);
+                try
+                {
+                    // Ensure the response is closed before continuing.
+                    response.Close();
+
+                    // Define connection string
+                    string connString = "Data Source=DESKTOP-FO7B6CB\\SQLEXPRESS01;Initial Catalog=API_Ship_v1;User ID=sample;Password=sample";
+
+                    // Create and open the SQL connection
+                    using (SqlConnection connection = new SqlConnection(connString))
+                    {
+                        connection.Open();
+
+                        // Create a SQL command to execute the stored procedure
+                        using (SqlCommand cmd = new SqlCommand())
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.CommandText = "dbo.WEShipExpress_importData_20241111";
+                            cmd.Connection = connection;
+
+                            // Define the parameter for the stored procedure
+                            SqlParameter param = new SqlParameter
+                            {
+                                ParameterName = "@DataToInsert",
+                                SqlDbType = SqlDbType.Structured,
+                                Value = trackingData,
+                                TypeName = "dbo.weshipexpresspro_temp_ships"
+                            };
+                            cmd.Parameters.Add(param);
+
+                            SendLongMessage("param: " + param);
+                            // Execute the stored procedure
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    // Send the response status to SQL context
+                    SqlContext.Pipe.Send("InsertDataToDatabase: " + response.StatusCode);
+                }
+                catch (Exception ex)
+                {
+                    // Handle any exceptions that occur
+                    SqlContext.Pipe.Send("Error: " + ex.Message);
+                }
+                finally
+                {
+                    // Ensure proper cleanup (if response is not yet closed)
+                    if (response != null )
+                    {
+                        response.Close();
+                    }
+                }
+
+
+
+                //InsertDataToDatabase(trackingData);
             }
             catch (Exception ex)
             {
@@ -254,41 +396,102 @@ namespace WEShipExpress_20241111
             }
         }
 
-        private static void AddTrackingDataColumns(DataTable trackingData)
+        private static void AddTrackingDataColumns(DataTable orderDetailsTable)
         {
             // Define DataTable columns based on JSON structure
-            trackingData.Columns.Add("ResponseStatus", typeof(bool));
-            trackingData.Columns.Add("ResponseStatusCode", typeof(int));
-            trackingData.Columns.Add("OrderNumber", typeof(string));
-            trackingData.Columns.Add("CreatedOn", typeof(long));
-            trackingData.Columns.Add("UpdatedOn", typeof(long));
-            trackingData.Columns.Add("ParentOrder", typeof(string));
-            trackingData.Columns.Add("OrderType", typeof(int));
-            trackingData.Columns.Add("OrderTypeDesc", typeof(string));
-            trackingData.Columns.Add("Status", typeof(int));
-            trackingData.Columns.Add("OrderStatusDesc", typeof(string));
-            trackingData.Columns.Add("AccountId", typeof(string));
-            trackingData.Columns.Add("ClientName", typeof(string));
-            trackingData.Columns.Add("CompanyName", typeof(string));
-            trackingData.Columns.Add("ShipperId", typeof(int));
-            trackingData.Columns.Add("WarehouseLocation", typeof(string));
-            trackingData.Columns.Add("UpdatedBy", typeof(int));
-            trackingData.Columns.Add("TotalQuantity", typeof(int));
-            trackingData.Columns.Add("TotalWeight", typeof(double));
-            trackingData.Columns.Add("PaymentMode", typeof(int));
-            trackingData.Columns.Add("PaymentStatus", typeof(int));
-            trackingData.Columns.Add("ServiceType", typeof(string));
-            trackingData.Columns.Add("ShippingMode", typeof(string));
-            trackingData.Columns.Add("Lob", typeof(int));
-            trackingData.Columns.Add("LobStatus", typeof(string));
-            trackingData.Columns.Add("StoreId", typeof(string));
-            trackingData.Columns.Add("StoreName", typeof(string));
-            trackingData.Columns.Add("Channel", typeof(string));
-            trackingData.Columns.Add("ReferenceId", typeof(string));
-            trackingData.Columns.Add("TrackingId", typeof(string));
-            trackingData.Columns.Add("Carrier", typeof(string));
-            trackingData.Columns.Add("LabelURL", typeof(string));
-            trackingData.Columns.Add("ErrorMessage", typeof(string));
+            // Adding columns with specified properties
+            orderDetailsTable.Columns.Add("Id", typeof(string));
+            orderDetailsTable.Columns.Add("CreatedOn", typeof(long));
+            orderDetailsTable.Columns.Add("UpdatedOn", typeof(long));
+            orderDetailsTable.Columns.Add("ParentOrder", typeof(string));
+            orderDetailsTable.Columns.Add("OrderInfoOrderType", typeof(int));
+            orderDetailsTable.Columns.Add("OrderTypeDesc", typeof(string));
+            orderDetailsTable.Columns.Add("Status", typeof(int));
+            orderDetailsTable.Columns.Add("OrderStatusDesc", typeof(string));
+            orderDetailsTable.Columns.Add("AccountId", typeof(string));
+            orderDetailsTable.Columns.Add("ClientName", typeof(string));
+            orderDetailsTable.Columns.Add("CompanyName", typeof(string));
+            orderDetailsTable.Columns.Add("ShipperId", typeof(int));
+            orderDetailsTable.Columns.Add("WarehouseLocation", typeof(string));
+            orderDetailsTable.Columns.Add("UpdatedBy", typeof(int));
+            orderDetailsTable.Columns.Add("TotalQuantity", typeof(int));
+            orderDetailsTable.Columns.Add("TotalWeight", typeof(double));
+            orderDetailsTable.Columns.Add("PaymentMode", typeof(int));
+            orderDetailsTable.Columns.Add("PaymentStatus", typeof(int));
+            orderDetailsTable.Columns.Add("ServiceType", typeof(string));
+            orderDetailsTable.Columns.Add("ShippingMode", typeof(string));
+            orderDetailsTable.Columns.Add("Lob", typeof(int));
+            orderDetailsTable.Columns.Add("LobStatus", typeof(string));
+            orderDetailsTable.Columns.Add("StoreId", typeof(string));
+            orderDetailsTable.Columns.Add("StoreName", typeof(string));
+            orderDetailsTable.Columns.Add("Channel", typeof(string));
+            orderDetailsTable.Columns.Add("ReferenceId", typeof(string));
+            orderDetailsTable.Columns.Add("DeliveryTargetDate", typeof(long));
+            orderDetailsTable.Columns.Add("DeliveryTargetTime", typeof(string));
+            orderDetailsTable.Columns.Add("TrackingId", typeof(string));
+            orderDetailsTable.Columns.Add("InternalTrackingId", typeof(string));
+            orderDetailsTable.Columns.Add("BoxId", typeof(string));
+            orderDetailsTable.Columns.Add("BoxCount", typeof(int));
+            orderDetailsTable.Columns.Add("OrderPod", typeof(string));
+            orderDetailsTable.Columns.Add("Carrier", typeof(string));
+            orderDetailsTable.Columns.Add("LabelPrinted", typeof(int));
+            orderDetailsTable.Columns.Add("Notification", typeof(bool));
+            orderDetailsTable.Columns.Add("AddInfoCompanyName", typeof(string));
+            orderDetailsTable.Columns.Add("FacilityName", typeof(string));
+            orderDetailsTable.Columns.Add("BeginDate", typeof(string));
+            orderDetailsTable.Columns.Add("Reason", typeof(string));
+            orderDetailsTable.Columns.Add("IsAsnGenerated", typeof(bool));
+            orderDetailsTable.Columns.Add("OrderState", typeof(int));
+            orderDetailsTable.Columns.Add("Otm", typeof(int));
+            orderDetailsTable.Columns.Add("CarrierAccountId", typeof(string));
+            orderDetailsTable.Columns.Add("ShipmentType", typeof(string));
+            orderDetailsTable.Columns.Add("CustomerId", typeof(string));
+            orderDetailsTable.Columns.Add("IsFulfilment", typeof(int));
+            orderDetailsTable.Columns.Add("Label", typeof(int));
+            orderDetailsTable.Columns.Add("LabelUrl", typeof(string));
+            orderDetailsTable.Columns.Add("IsCCP", typeof(bool));
+            orderDetailsTable.Columns.Add("ShipFromName", typeof(string));
+            orderDetailsTable.Columns.Add("ShipFromAddress", typeof(string));
+            orderDetailsTable.Columns.Add("ShipFromCity", typeof(string));
+            orderDetailsTable.Columns.Add("ShipFromState", typeof(string));
+            orderDetailsTable.Columns.Add("ShipFromCountry", typeof(string));
+            orderDetailsTable.Columns.Add("ShipFromPostalCode", typeof(string));
+            orderDetailsTable.Columns.Add("ShipFromEmail", typeof(string));
+            orderDetailsTable.Columns.Add("ShipFromMobile", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToName", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToAddress", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToAddress2", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToCity", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToState", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToCountry", typeof(string));
+            orderDetailsTable.Columns.Add("PostalCode", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToEmail", typeof(string));
+            orderDetailsTable.Columns.Add("ShipToMobile", typeof(string));
+            orderDetailsTable.Columns.Add("BillToName", typeof(string));
+            orderDetailsTable.Columns.Add("BillToAddress", typeof(string));
+            orderDetailsTable.Columns.Add("BillToAddress2", typeof(string));
+            orderDetailsTable.Columns.Add("BillToCity", typeof(string));
+            orderDetailsTable.Columns.Add("BillToState", typeof(string));
+            orderDetailsTable.Columns.Add("BillToCountry", typeof(string));
+            orderDetailsTable.Columns.Add("BillToPostal", typeof(string));
+            orderDetailsTable.Columns.Add("BillToEmail", typeof(string));
+            orderDetailsTable.Columns.Add("BillToMobile", typeof(string));
+            orderDetailsTable.Columns.Add("ContainerizedOrder", typeof(bool));
+            orderDetailsTable.Columns.Add("MultiItemOrders", typeof(int));
+            orderDetailsTable.Columns.Add("ShipstationOrder", typeof(int));
+            orderDetailsTable.Columns.Add("UpdateCarrier", typeof(bool));
+            orderDetailsTable.Columns.Add("RateCardEnable", typeof(bool));
+            orderDetailsTable.Columns.Add("BatchGenerated", typeof(bool));
+            orderDetailsTable.Columns.Add("OrderType", typeof(string));
+            orderDetailsTable.Columns.Add("IcePack", typeof(int));
+            orderDetailsTable.Columns.Add("OrderDate", typeof(long));
+            orderDetailsTable.Columns.Add("SsPackingSlip", typeof(int));
+            orderDetailsTable.Columns.Add("SsShippingLabel", typeof(int));
+            orderDetailsTable.Columns.Add("ProductTypeDesc", typeof(string));
+            orderDetailsTable.Columns.Add("CarrierLabelUrl", typeof(string));
+            orderDetailsTable.Columns.Add("ConnectorEmailStatus", typeof(int));
+            orderDetailsTable.Columns.Add("SkuGroup", typeof(string));
+            orderDetailsTable.Columns.Add("Fulfilment", typeof(string));
         }
 
         private static void SetRequestHeaders(HttpWebRequest request)
@@ -490,47 +693,15 @@ namespace WEShipExpress_20241111
             }
         }
 
-        //private static void HandleGeneralException(Exception ex)
-        //{
-        //    SqlContext.Pipe.Send("General exception occurred: " + ex.Message);
-        //    SqlContext.Pipe.Send(ex.StackTrace);
-        //}
-
-        private static async Task InsertDataToDatabase(DataTable trackingData)
-        {
-            string connString = "Data Source=DESKTOP-FO7B6CB\\SQLEXPRESS01;Initial Catalog=API_Ship_v1;User ID=sample;Password=sample";
-            using (SqlConnection connection = new SqlConnection(connString))
-            {
-                await connection.OpenAsync();
-                using (SqlCommand cmd = new SqlCommand("dbo.Ship_importData_20241111", connection))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    SqlParameter param = new SqlParameter
-                    {
-                        ParameterName = "@DataToInsert",
-                        SqlDbType = SqlDbType.Structured,
-                        Value = trackingData,
-                        TypeName = "dbo.weshipexpresspro_temp_ships"
-
-
-                    };
-
-                    cmd.Parameters.Add(param);
-                    SqlContext.Pipe.Send("InsertDataToDatabase param: " + param);
-                    await cmd.ExecuteNonQueryAsync();
-                }
-            }
-        }
-
 
         private static async Task HandleGeneralException(Exception ex)
         {
-          await  SendLongMessage("Handled exception: " + ex.Message);
+            await SendLongMessage("Handled exception: " + ex.Message);
         }
 
 
         // Helper method to send messages in chunks
-        private static async Task  SendLongMessage(string message)
+        private static async Task SendLongMessage(string message)
         {
             const int maxChunkSize = 4000;
             int messageLength = message.Length;

@@ -7,348 +7,366 @@ using Newtonsoft.Json;
 
 namespace API_We_Ship_Express
 {
-   
+
+
+    public class ResponseObject
+    {
+        [JsonProperty("responseStatus")]
+        public bool responseStatus { get; set; }
+
+        [JsonProperty("responseStatusCode")]
+        public int responseStatusCode { get; set; }
+
+        [JsonProperty("responseObject")]
+        public OrderDetails responseObject { get; set; }
+    }
+
+    public class OrderDetails
+    {
+        [JsonProperty("orderNumber")]
+        public OrderNumber orderNumber { get; set; }
+
+        [JsonProperty("orderInfo")]
+        public OrderInfo orderInfo { get; set; }
+
+        [JsonProperty("additionalInfo")]
+        public AdditionalInfo additionalInfo { get; set; }
+
+        [JsonProperty("shipFromInfo")]
+        public ShipFromInfo shipFromInfo { get; set; }
+
+        [JsonProperty("shipToInfo")]
+        public ShipToInfo shipToInfo { get; set; }
+
+        [JsonProperty("billToInfo")]
+        public BillToInfo billToInfo { get; set; }
+
+        [JsonProperty("containerizedOrder")]
+        public bool containerizedOrder { get; set; }
+
+        [JsonProperty("multiItemOrders")]
+        public int multiItemOrders { get; set; }
+
+        [JsonProperty("shipstationOrder")]
+        public int shipstationOrder { get; set; }
+
+        [JsonProperty("orderTransactions")]
+        public List<OrderTransaction> orderTransactions { get; set; }
+
+        [JsonProperty("updateCarrier")]
+        public bool updateCarrier { get; set; }
+
+        [JsonProperty("rateCardEnable")]
+        public bool rateCardEnable { get; set; }
+
+        [JsonProperty("batchGenerated")]
+        public bool batchGenerated { get; set; }
+
+        [JsonProperty("orderType")]
+        public string orderType { get; set; }
+
+        [JsonProperty("icePack")]
+        public int icePack { get; set; }
+
+        [JsonProperty("orderDate")]
+        public long orderDate { get; set; }
+
+        [JsonProperty("ssPackingSlip")]
+        public int ssPackingSlip { get; set; }
+
+        [JsonProperty("ssShippingLabel")]
+        public int ssShippingLabel { get; set; }
+
+        [JsonProperty("productTypeDesc")]
+        public string productTypeDesc { get; set; }
+
+        [JsonProperty("carrierLabelUrl")]
+        public string carrierLabelUrl { get; set; }
+
+        [JsonProperty("connectorEmailStatus")]
+        public int connectorEmailStatus { get; set; }
+
+        [JsonProperty("skuGroup")]
+        public string skuGroup { get; set; }
+
+        [JsonProperty("fulfilment")]
+        public string fulfilment { get; set; }
+    }
 
     public class OrderNumber
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public string id { get; set; }
     }
 
     public class OrderInfo
     {
         [JsonProperty("createdOn")]
-        public long CreatedOn { get; set; }
+        public long createdOn { get; set; }
 
         [JsonProperty("updatedOn")]
-        public long UpdatedOn { get; set; }
+        public long updatedOn { get; set; }
 
         [JsonProperty("parentOrder")]
-        public string ParentOrder { get; set; }
+        public string parentOrder { get; set; }
 
         [JsonProperty("orderType")]
-        public int OrderType { get; set; }
+        public int orderType { get; set; }
 
         [JsonProperty("orderTypeDesc")]
-        public string OrderTypeDesc { get; set; }
+        public string orderTypeDesc { get; set; }
 
         [JsonProperty("status")]
-        public int Status { get; set; }
+        public int status { get; set; }
 
         [JsonProperty("orderStatusDesc")]
-        public string OrderStatusDesc { get; set; }
+        public string orderStatusDesc { get; set; }
 
         [JsonProperty("accountId")]
-        public string AccountId { get; set; }
+        public string accountId { get; set; }
 
         [JsonProperty("clientName")]
-        public string ClientName { get; set; }
+        public string clientName { get; set; }
 
         [JsonProperty("companyName")]
-        public string CompanyName { get; set; }
+        public string companyName { get; set; }
 
         [JsonProperty("shipperId")]
-        public int ShipperId { get; set; }
+        public int shipperId { get; set; }
 
         [JsonProperty("warehouseLocation")]
-        public string WarehouseLocation { get; set; }
+        public string warehouseLocation { get; set; }
 
         [JsonProperty("updatedBy")]
-        public int UpdatedBy { get; set; }
+        public int updatedBy { get; set; }
 
         [JsonProperty("totalQuantity")]
-        public int TotalQuantity { get; set; }
+        public int totalQuantity { get; set; }
 
         [JsonProperty("totalWeight")]
-        public double TotalWeight { get; set; }
+        public float totalWeight { get; set; }
 
         [JsonProperty("paymentMode")]
-        public int PaymentMode { get; set; }
+        public int paymentMode { get; set; }
 
         [JsonProperty("paymentStatus")]
-        public int PaymentStatus { get; set; }
+        public int paymentStatus { get; set; }
 
         [JsonProperty("serviceType")]
-        public string ServiceType { get; set; }
+        public string serviceType { get; set; }
 
         [JsonProperty("shippingMode")]
-        public string ShippingMode { get; set; }
+        public string shippingMode { get; set; }
 
         [JsonProperty("lob")]
-        public int Lob { get; set; }
+        public int lob { get; set; }
 
         [JsonProperty("lobStatus")]
-        public string LobStatus { get; set; }
+        public string lobStatus { get; set; }
 
         [JsonProperty("storeId")]
-        public string StoreId { get; set; }
+        public string storeId { get; set; }
 
         [JsonProperty("storeName")]
-        public string StoreName { get; set; }
+        public string storeName { get; set; }
     }
 
     public class AdditionalInfo
     {
         [JsonProperty("channel")]
-        public string Channel { get; set; }
+        public string channel { get; set; }
 
         [JsonProperty("referenceId")]
-        public string ReferenceId { get; set; }
+        public string referenceId { get; set; }
 
         [JsonProperty("deliveryTargetDate")]
-        public int DeliveryTargetDate { get; set; }
+        public long deliveryTargetDate { get; set; }
 
         [JsonProperty("deliveryTargetTime")]
-        public string DeliveryTargetTime { get; set; }
+        public string deliveryTargetTime { get; set; }
 
         [JsonProperty("trackingId")]
-        public string TrackingId { get; set; }
+        public string trackingId { get; set; }
 
         [JsonProperty("internalTrackingId")]
-        public string InternalTrackingId { get; set; }
+        public string internalTrackingId { get; set; }
 
         [JsonProperty("boxId")]
-        public string BoxId { get; set; }
+        public string boxId { get; set; }
 
         [JsonProperty("boxCount")]
-        public int BoxCount { get; set; }
+        public int boxCount { get; set; }
 
         [JsonProperty("orderPod")]
-        public string OrderPod { get; set; }
+        public string orderPod { get; set; }
 
         [JsonProperty("carrier")]
-        public string Carrier { get; set; }
+        public string carrier { get; set; }
 
         [JsonProperty("labelPrinted")]
-        public int LabelPrinted { get; set; }
+        public int labelPrinted { get; set; }
 
         [JsonProperty("notification")]
-        public bool Notification { get; set; }
+        public bool notification { get; set; }
 
         [JsonProperty("companyName")]
-        public string CompanyName { get; set; }
+        public string companyName { get; set; }
 
         [JsonProperty("facilityName")]
-        public string FacilityName { get; set; }
+        public string facilityName { get; set; }
 
         [JsonProperty("beginDate")]
-        public string BeginDate { get; set; }
+        public string beginDate { get; set; }
 
         [JsonProperty("reason")]
-        public string Reason { get; set; }
+        public string reason { get; set; }
 
         [JsonProperty("isAsnGenerated")]
-        public bool IsAsnGenerated { get; set; }
+        public bool isAsnGenerated { get; set; }
 
         [JsonProperty("orderState")]
-        public int OrderState { get; set; }
+        public int orderState { get; set; }
 
         [JsonProperty("otm")]
-        public int Otm { get; set; }
+        public int otm { get; set; }
 
         [JsonProperty("carrierAccountId")]
-        public string CarrierAccountId { get; set; }
+        public string carrierAccountId { get; set; }
 
         [JsonProperty("shipmentType")]
-        public string ShipmentType { get; set; }
+        public string shipmentType { get; set; }
 
         [JsonProperty("customerId")]
-        public string CustomerId { get; set; }
+        public string customerId { get; set; }
 
         [JsonProperty("isFulfilment")]
-        public int IsFulfilment { get; set; }
+        public int isFulfilment { get; set; }
 
         [JsonProperty("label")]
-        public int Label { get; set; }
+        public int label { get; set; }
 
         [JsonProperty("labelUrl")]
-        public string LabelUrl { get; set; }
+        public string labelUrl { get; set; }
 
         [JsonProperty("isCCP")]
-        public bool IsCcp { get; set; }
+        public bool isCCP { get; set; }
     }
 
     public class ShipFromInfo
     {
         [JsonProperty("shipFromName")]
-        public string ShipFromName { get; set; }
+        public string shipFromName { get; set; }
 
         [JsonProperty("shipFromAddress")]
-        public string ShipFromAddress { get; set; }
+        public string shipFromAddress { get; set; }
 
         [JsonProperty("shipFromCity")]
-        public string ShipFromCity { get; set; }
+        public string shipFromCity { get; set; }
 
         [JsonProperty("shipFromState")]
-        public string ShipFromState { get; set; }
+        public string shipFromState { get; set; }
 
         [JsonProperty("shipFromCountry")]
-        public string ShipFromCountry { get; set; }
+        public string shipFromCountry { get; set; }
 
         [JsonProperty("shipFromPostalCode")]
-        public string ShipFromPostalCode { get; set; }
+        public string shipFromPostalCode { get; set; }
 
         [JsonProperty("shipFromEmail")]
-        public string ShipFromEmail { get; set; }
+        public string shipFromEmail { get; set; }
 
         [JsonProperty("shipFromMobile")]
-        public string ShipFromMobile { get; set; }
+        public string shipFromMobile { get; set; }
     }
 
     public class ShipToInfo
     {
         [JsonProperty("shipToName")]
-        public string ShipToName { get; set; }
+        public string shipToName { get; set; }
 
         [JsonProperty("shipToAddress")]
-        public string ShipToAddress { get; set; }
+        public string shipToAddress { get; set; }
 
         [JsonProperty("shipToAddress2")]
-        public string ShipToAddress2 { get; set; }
+        public string shipToAddress2 { get; set; }
 
         [JsonProperty("shipToCity")]
-        public string ShipToCity { get; set; }
+        public string shipToCity { get; set; }
 
         [JsonProperty("shipToState")]
-        public string ShipToState { get; set; }
+        public string shipToState { get; set; }
 
         [JsonProperty("shipToCountry")]
-        public string ShipToCountry { get; set; }
+        public string shipToCountry { get; set; }
 
         [JsonProperty("postalCode")]
-        public string PostalCode { get; set; }
+        public string postalCode { get; set; }
 
         [JsonProperty("shipToEmail")]
-        public string ShipToEmail { get; set; }
+        public string shipToEmail { get; set; }
 
         [JsonProperty("shipToMobile")]
-        public string ShipToMobile { get; set; }
+        public string shipToMobile { get; set; }
     }
 
     public class BillToInfo
     {
         [JsonProperty("billToName")]
-        public string BillToName { get; set; }
+        public string billToName { get; set; }
 
         [JsonProperty("billToAddress")]
-        public string BillToAddress { get; set; }
+        public string billToAddress { get; set; }
 
         [JsonProperty("billToAddress2")]
-        public string BillToAddress2 { get; set; }
+        public string billToAddress2 { get; set; }
 
         [JsonProperty("billToCity")]
-        public string BillToCity { get; set; }
+        public string billToCity { get; set; }
 
         [JsonProperty("billToState")]
-        public string BillToState { get; set; }
+        public string billToState { get; set; }
 
         [JsonProperty("billToCountry")]
-        public string BillToCountry { get; set; }
+        public string billToCountry { get; set; }
 
         [JsonProperty("billToPostal")]
-        public string BillToPostal { get; set; }
+        public string billToPostal { get; set; }
 
         [JsonProperty("billToEmail")]
-        public string BillToEmail { get; set; }
+        public string billToEmail { get; set; }
 
         [JsonProperty("billToMobile")]
-        public string BillToMobile { get; set; }
+        public string billToMobile { get; set; }
     }
+
+
 
     public class OrderTransaction
     {
         [JsonProperty("status")]
-        public int Status { get; set; }
+        public int status { get; set; }
 
         [JsonProperty("createdOn")]
-        public string CreatedOn { get; set; }
+        public string createdOn { get; set; }
 
         [JsonProperty("updatedOn")]
-        public string UpdatedOn { get; set; }
+        public string updatedOn { get; set; }
 
         [JsonProperty("reason")]
-        public string Reason { get; set; }
+        public string reason { get; set; }
 
         [JsonProperty("orderStatusDesc")]
-        public string OrderStatusDesc { get; set; }
+        public string orderStatusDesc { get; set; }
 
         [JsonProperty("statusSequence")]
-        public int StatusSequence { get; set; }
+        public int statusSequence { get; set; }
 
         [JsonProperty("shipToCity")]
-        public string ShipToCity { get; set; }
+        public string shipToCity { get; set; }
 
         [JsonProperty("shipToState")]
-        public string ShipToState { get; set; }
+        public string shipToState { get; set; }
     }
 
-    public class ResponseObject
-    {
-        [JsonProperty("orderNumber")]
-        public OrderNumber OrderNumber { get; set; }
-
-        [JsonProperty("orderInfo")]
-        public OrderInfo OrderInfo { get; set; }
-
-        [JsonProperty("additionalInfo")]
-        public AdditionalInfo AdditionalInfo { get; set; }
-
-        [JsonProperty("shipFromInfo")]
-        public ShipFromInfo ShipFromInfo { get; set; }
-
-        [JsonProperty("shipToInfo")]
-        public ShipToInfo ShipToInfo { get; set; }
-
-        [JsonProperty("billToInfo")]
-        public BillToInfo BillToInfo { get; set; }
-
-        [JsonProperty("containerizedOrder")]
-        public bool ContainerizedOrder { get; set; }
-
-        [JsonProperty("multiItemOrders")]
-        public int MultiItemOrders { get; set; }
-
-        [JsonProperty("shipstationOrder")]
-        public int ShipstationOrder { get; set; }
-
-        [JsonProperty("orderTransactions")]
-        public List<OrderTransaction> OrderTransactions { get; set; }
-
-        [JsonProperty("updateCarrier")]
-        public bool UpdateCarrier { get; set; }
-
-        [JsonProperty("rateCardEnable")]
-        public bool RateCardEnable { get; set; }
-
-        [JsonProperty("batchGenerated")]
-        public bool BatchGenerated { get; set; }
-
-        [JsonProperty("orderType")]
-        public string OrderType { get; set; }
-
-        [JsonProperty("icePack")]
-        public int IcePack { get; set; }
-
-        [JsonProperty("orderDate")]
-        public long OrderDate { get; set; }
-
-        [JsonProperty("connectorEmailStatus")]
-        public int ConnectorEmailStatus { get; set; }
-
-        [JsonProperty("skuGroup")]
-        public string SkuGroup { get; set; }
-    }
-
-    public class Root
-    {
-        [JsonProperty("responseStatus")]
-        public bool ResponseStatus { get; set; }
-
-        [JsonProperty("responseStatusCode")]
-        public int ResponseStatusCode { get; set; }
-
-        [JsonProperty("responseObject")]
-        public ResponseObject ResponseObject { get; set; }
-    }
 
 }
