@@ -343,6 +343,8 @@ namespace API_We_Ship_Express
 
     public class OrderTransaction
     {
+        public string orderNumber { get; set; }
+
         [JsonProperty("status")]
         public int status { get; set; }
 

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using API_We_Ship_Express;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Globalization;
 
 namespace WEShipExpress_20241111
 {
@@ -24,6 +25,9 @@ namespace WEShipExpress_20241111
             // Initialize DataTable with specified structure
             DataTable trackingData = new DataTable("trackingData");
             AddTrackingDataColumns(trackingData);
+
+            DataTable trackingTransactionData = new DataTable("trackingTransactionData");
+            AddTrackingDataTransactionColumns(trackingTransactionData);
 
             string jsonBodyString = jsonBody.ToString();
 
@@ -108,7 +112,7 @@ namespace WEShipExpress_20241111
                         // Parse JSON response and populate trackingData
                         //var jsonObject = new JObject();
                         var jsonObject = JObject.Parse(responseStr);
-                        SendLongMessage("jsonObject: " + jsonObject);
+                        //SendLongMessage("jsonObject: " + jsonObject);
                         try
                         {
 
@@ -147,13 +151,16 @@ namespace WEShipExpress_20241111
 
                             // Deserialize the JSON into a dynamic object
                             var responseObject = JsonConvert.DeserializeObject<ResponseObject>(responseStr);
-                            SendLongMessage("responseObject: " + responseObject);
+                            //SendLongMessage("responseObject: " + responseObject);
 
 
 
 
                             // Create a new DataRow
                             DataRow row = trackingData.NewRow();
+
+                            //// Create a new DataRow for orderTransaction
+                            //DataRow rowTransaction = trackingTransactionData.NewRow();
 
                             // Populate the DataRow with the deserialized data
                             row["Id"] = responseObject.responseObject.orderNumber.id;
@@ -211,31 +218,31 @@ namespace WEShipExpress_20241111
                             //TO CONVERT IN BASE64
                             row["LabelUrl"] = responseObject.responseObject.additionalInfo.labelUrl;
 
-                            if (!string.IsNullOrEmpty(responseObject.responseObject.additionalInfo.labelUrl.ToString()))
-                            {
-                                using (var httpClient = new HttpClient())
-                                {
-                                    // Download the file
-                                    HttpResponseMessage responseurl = await httpClient.GetAsync(responseObject.responseObject.additionalInfo.labelUrl.ToString());
-                                    // Step 1: Download the file
-                                    //var responseurl = await httpClient.GetAsync(responseObject.responseObject.additionalInfo.labelUrl.ToString());
-                                    if (responseurl.IsSuccessStatusCode)
-                                    {
-                                        // Convert file to byte array and then Base64
-                                        byte[] fileBytes = await responseurl.Content.ReadAsByteArrayAsync();
-                                        string base64File = Convert.ToBase64String(fileBytes);
+                            //if (!string.IsNullOrEmpty(responseObject.responseObject.additionalInfo.labelUrl.ToString()))
+                            //{
+                            //    using (var httpClient = new HttpClient())
+                            //    {
+                            //        // Download the file
+                            //        HttpResponseMessage responseurl = await httpClient.GetAsync(responseObject.responseObject.additionalInfo.labelUrl.ToString());
+                            //        // Step 1: Download the file
+                            //        //var responseurl = await httpClient.GetAsync(responseObject.responseObject.additionalInfo.labelUrl.ToString());
+                            //        if (responseurl.IsSuccessStatusCode)
+                            //        {
+                            //            // Convert file to byte array and then Base64
+                            //            byte[] fileBytes = await responseurl.Content.ReadAsByteArrayAsync();
+                            //            string base64File = Convert.ToBase64String(fileBytes);
 
-                                        row["LabelUrl"] = base64File;
-                                        SendLongMessage("responseurl: " + base64File);
+                            //            row["LabelUrl"] = base64File;
+                            //            SendLongMessage("responseurl: " + base64File);
 
-                                    }
-                                    else
-                                    {
-                                        throw new Exception("Failed to download file from URL.");
-                                        SendLongMessage("responseurl: Failed to download file from URL.");
-                                    }
-                                }
-                            }
+                            //        }
+                            //        else
+                            //        {
+                            //            throw new Exception("Failed to download file from URL.");
+                            //            SendLongMessage("responseurl: Failed to download file from URL.");
+                            //        }
+                            //    }
+                            //}
 
 
 
@@ -249,7 +256,7 @@ namespace WEShipExpress_20241111
                             row["ShipFromPostalCode"] = responseObject.responseObject.shipFromInfo.shipFromPostalCode;
                             row["ShipFromEmail"] = responseObject.responseObject.shipFromInfo.shipFromEmail;
                             row["ShipFromMobile"] = responseObject.responseObject.shipFromInfo.shipFromMobile;
-                            
+
                             row["ShipToName"] = responseObject.responseObject.shipToInfo.shipToName;
                             row["ShipToAddress"] = responseObject.responseObject.shipToInfo.shipToAddress;
                             row["ShipToAddress2"] = responseObject.responseObject.shipToInfo.shipToAddress2;
@@ -291,28 +298,47 @@ namespace WEShipExpress_20241111
                             row["SkuGroup"] = responseObject.responseObject.skuGroup;
                             row["Fulfilment"] = responseObject.responseObject.fulfilment;
 
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-                            //row["UpdatedOn"] = responseObject.responseObject.orderInfo.updatedOn;
-
-
-                            // (add all other field mappings here)
-
                             // Add the DataRow to the DataTable
                             trackingData.Rows.Add(row);
+
+                            //salvatagio dei dato del ordertracking
+
+                            if (responseObject.responseObject.orderTransactions != null && responseObject.responseObject.orderTransactions.Count > 0)
+                            {
+
+                                // Parse the orderTransactions array
+                                JArray orderTransactions = (JArray)jsonObject["responseObject"]["orderTransactions"];
+                                SendLongMessage("orderTransactions: " + orderTransactions);
+
+                                foreach (JObject transaction in orderTransactions)
+                                {
+
+                                    // Create a new DataRow for orderTransaction
+                                    DataRow rowTransaction = trackingTransactionData.NewRow();
+
+                                    rowTransaction["orderNumber"] = responseObject.responseObject.orderNumber.id;
+                                    rowTransaction["Status"] = (int)transaction["status"];
+                                    rowTransaction["CreatedOn"] = DateTimeOffset.ParseExact((string)transaction["createdOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime;
+                                    rowTransaction["UpdatedOn"] = DateTimeOffset.ParseExact((string)transaction["updatedOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime;
+                                    rowTransaction["Reason"] = (string)transaction["reason"];
+                                    rowTransaction["OrderStatusDesc"] = (string)transaction["orderStatusDesc"];
+                                    rowTransaction["StatusSequence"] = (int)transaction["statusSequence"];
+                                    rowTransaction["ShipToCity"] = (string)transaction["shipToCity"];
+                                    rowTransaction["ShipToState"] = (string)transaction["shipToState"];
+
+                                    // Add the rowTransaction to trackingTransactionData
+                                    trackingTransactionData.Rows.Add(rowTransaction);
+                                }
+
+                            }
+
+
+
 
                         }
                         catch (Exception ex)
                         {
-
-                            SqlContext.Pipe.Send("jsonObject ex: " + ex);
+                            SendLongMessage("jsonObject ex: " + ex);
                             HandleGeneralException(ex);
                             throw;
                         }
@@ -370,17 +396,53 @@ namespace WEShipExpress_20241111
                     }
 
                     // Send the response status to SQL context
-                    SqlContext.Pipe.Send("InsertDataToDatabase: " + response.StatusCode);
+                    SqlContext.Pipe.Send("InsertDataToDatabase in weshipexpresspro_temp_ships: " + response.StatusCode);
+
+
+                    // Create and open the SQL connection
+                    using (SqlConnection connection = new SqlConnection(connString))
+                    {
+                        connection.Open();
+
+                        // Create a SQL command to execute the stored procedure
+                        using (SqlCommand cmd = new SqlCommand())
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.CommandText = "dbo.WEShipExpressTransactions_importData_20241111";
+                            cmd.Connection = connection;
+
+                            // Define the parameter for the stored procedure
+                            SqlParameter param = new SqlParameter
+                            {
+                                ParameterName = "@DataToInsertTransaction",
+                                SqlDbType = SqlDbType.Structured,
+                                Value = trackingTransactionData,
+                                TypeName = "dbo.weshipexpresspro_temp_shipstransactions"
+                            };
+                            cmd.Parameters.Add(param);
+
+                            SendLongMessage("param: " + param);
+                            // Execute the stored procedure
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    // Send the response status to SQL context
+                    SendLongMessage("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
+                    //SqlContext.Pipe.Send("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
+
+
                 }
                 catch (Exception ex)
                 {
                     // Handle any exceptions that occur
-                    SqlContext.Pipe.Send("Error: " + ex.Message);
+                    SendLongMessage("Error: " + ex.Message);
+                    //SqlContext.Pipe.Send("Error: " + ex.Message);
                 }
                 finally
                 {
                     // Ensure proper cleanup (if response is not yet closed)
-                    if (response != null )
+                    if (response != null)
                     {
                         response.Close();
                     }
@@ -494,176 +556,19 @@ namespace WEShipExpress_20241111
             orderDetailsTable.Columns.Add("Fulfilment", typeof(string));
         }
 
-        private static void SetRequestHeaders(HttpWebRequest request)
+        private static void AddTrackingDataTransactionColumns(DataTable orderDetailsTransactionTable)
         {
-            request.Headers.Add("APIKey", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJcdTAwMTFcdTAwMUYtOjlcdTAwMTZcXDZIXCImPlx1MDAwRnxcXFx1MDAxMigtXHUwMDE2XHUwMDE0XHUwMDE5XHUwMDA0XGZsXVVFRVx1MDAxNlx1MDAwNVx1MDAwRVtmXmsiLCJpc3MiOiJjb20uYWR2YXRpeC5zZXJ2aWNlcyIsImV4cCI6MTY1NjMzNjQ3MCwiaWF0IjoxNjU2MzI5MjcwLCJqdGk");
-            request.Headers.Add("AccountId", "BTV");
-            request.Headers.Add("DEVICE-TYPE", "Web");
-            request.Headers.Add("VER", "1.0");
-        }
-
-        private static async void HandleSuccessfulResponse(HttpWebResponse response, DataTable trackingData)
-        {
-            //using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-            //{
-            Stream responseStream = response.GetResponseStream();
-            string responseStr = new StreamReader(responseStream).ReadToEnd();
-
-
-            // Parse JSON response and populate trackingData
-            var jsonObject = JObject.Parse(responseStr);
-            DataRow row = trackingData.NewRow();
-
-
-            var responseStatusToken = jsonObject["responseStatus"];
-            if (responseStatusToken != null)
-            {
-                try
-                {
-                    // Use Convert.ToBoolean to safely parse true/false values or "true"/"false" strings
-                    row["ResponseStatus"] = Convert.ToBoolean(responseStatusToken);
-                }
-                catch
-                {
-                    // Default to false if conversion fails
-                    row["ResponseStatus"] = false;
-                }
-            }
-            else
-            {
-                row["ResponseStatus"] = false; // default value if null
-            }
-
-            var responseStatusCodeToken = jsonObject["responseStatusCode"];
-            if (responseStatusCodeToken != null)
-            {
-                try
-                {
-                    // Convert responseStatusCode to an integer safely
-                    row["ResponseStatusCode"] = Convert.ToInt32(responseStatusCodeToken);
-                }
-                catch
-                {
-                    // Default to 0 if conversion fails
-                    row["ResponseStatusCode"] = 0;
-                }
-            }
-            else
-            {
-                row["ResponseStatusCode"] = 0; // default value if null
-            }
-
-            //var responseObject = jsonObject["responseObject"];
-            //var orderInfo = responseObject?["orderInfo"];
-            //var additionalInfo = responseObject?["additionalInfo"];
-            //row["CreatedOn"] = orderInfo?["createdOn"] != null ? Convert.ToInt64(orderInfo["createdOn"]) : 0;
-            //row["UpdatedOn"] = orderInfo?["updatedOn"] != null ? Convert.ToInt64(orderInfo["updatedOn"]) : 0;
-            //row["OrderType"] = orderInfo?["orderType"] != null ? Convert.ToInt32(orderInfo["orderType"]) : 0;
-            //row["Status"] = orderInfo?["status"] != null ? Convert.ToInt32(orderInfo["status"]) : 0;
-            //row["ShipperId"] = orderInfo?["shipperId"] != null ? Convert.ToInt32(orderInfo["shipperId"]) : 0;
-            //row["UpdatedBy"] = orderInfo?["updatedBy"] != null ? Convert.ToInt32(orderInfo["updatedBy"]) : 0;
-            //row["TotalQuantity"] = orderInfo?["totalQuantity"] != null ? Convert.ToInt32(orderInfo["totalQuantity"]) : 0;
-            //row["TotalWeight"] = orderInfo?["totalWeight"] != null ? Convert.ToDouble(orderInfo["totalWeight"]) : 0.0;
-            //row["PaymentMode"] = orderInfo?["paymentMode"] != null ? Convert.ToInt32(orderInfo["paymentMode"]) : 0;
-            //row["PaymentStatus"] = orderInfo?["paymentStatus"] != null ? Convert.ToInt32(orderInfo["paymentStatus"]) : 0;
-            //row["Lob"] = orderInfo?["lob"] != null ? Convert.ToInt32(orderInfo["lob"]) : 0;
-
-            //row["DeliveryTargetDate"] = additionalInfo?["deliveryTargetDate"] != null ? Convert.ToInt64(additionalInfo["deliveryTargetDate"]) : 0;
-            //row["BoxCount"] = additionalInfo?["boxCount"] != null ? Convert.ToInt32(additionalInfo["boxCount"]) : 0;
-            //row["LabelPrinted"] = additionalInfo?["labelPrinted"] != null ? Convert.ToInt32(additionalInfo["labelPrinted"]) : 0;
-            //row["Notification"] = additionalInfo?["notification"] != null ? Convert.ToBoolean(additionalInfo["notification"]) : false;
-            //row["IsAsnGenerated"] = additionalInfo?["isAsnGenerated"] != null ? Convert.ToBoolean(additionalInfo["isAsnGenerated"]) : false;
-            //row["OrderState"] = additionalInfo?["orderState"] != null ? Convert.ToInt32(additionalInfo["orderState"]) : 0;
-            //row["Otm"] = additionalInfo?["otm"] != null ? Convert.ToInt32(additionalInfo["otm"]) : 0;
-            //row["IsFulfilment"] = additionalInfo?["isFulfilment"] != null ? Convert.ToInt32(additionalInfo["isFulfilment"]) : 0;
-            //row["Label"] = additionalInfo?["label"] != null ? Convert.ToInt32(additionalInfo["label"]) : 0;
-            //row["IsCcp"] = additionalInfo?["isCCP"] != null ? Convert.ToBoolean(additionalInfo["isCCP"]) : false;
-            //// Order Number
-            //row["OrderNumber"] = (string)jsonObject["responseObject"]?["orderNumber"]?["id"];
-
-            //// Order Info
-
-            //row["ParentOrder"] = (string)jsonObject["responseObject"]?["orderInfo"]?["parentOrder"];
-
-            //row["OrderTypeDesc"] = (string)jsonObject["responseObject"]?["orderInfo"]?["orderTypeDesc"];
-
-            //row["OrderStatusDesc"] = (string)jsonObject["responseObject"]?["orderInfo"]?["orderStatusDesc"];
-            //row["AccountId"] = (string)jsonObject["responseObject"]?["orderInfo"]?["accountId"];
-            //row["ClientName"] = (string)jsonObject["responseObject"]?["orderInfo"]?["clientName"];
-            //row["CompanyName"] = (string)jsonObject["responseObject"]?["orderInfo"]?["companyName"];
-
-            //row["WarehouseLocation"] = (string)jsonObject["responseObject"]?["orderInfo"]?["warehouseLocation"];
-
-            //row["ServiceType"] = (string)jsonObject["responseObject"]?["orderInfo"]?["serviceType"];
-            //row["ShippingMode"] = (string)jsonObject["responseObject"]?["orderInfo"]?["shippingMode"];
-
-            //row["LobStatus"] = (string)jsonObject["responseObject"]?["orderInfo"]?["lobStatus"];
-            //row["StoreId"] = (string)jsonObject["responseObject"]?["orderInfo"]?["storeId"];
-            //row["StoreName"] = (string)jsonObject["responseObject"]?["orderInfo"]?["storeName"];
-
-            //// Additional Info
-            //row["Channel"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["channel"];
-            //row["ReferenceId"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["referenceId"];
-
-            //row["DeliveryTargetTime"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["deliveryTargetTime"];
-            //row["TrackingId"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["trackingId"];
-            //row["InternalTrackingId"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["internalTrackingId"];
-            //row["BoxId"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["boxId"];
-
-            //row["OrderPod"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["orderPod"];
-            //row["Carrier"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["carrier"];
-
-            //row["CompanyName"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["companyName"];
-            //row["FacilityName"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["facilityName"];
-            //row["BeginDate"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["beginDate"];
-            //row["Reason"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["reason"];
-
-            //row["CarrierAccountId"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["carrierAccountId"];
-            //row["ShipmentType"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["shipmentType"];
-            //row["CustomerId"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["customerId"];
-
-            //row["LabelUrl"] = (string)jsonObject["responseObject"]?["additionalInfo"]?["labelUrl"];
-
-
-            //// ShipFrom Info
-            //row["ShipFromName"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromName"];
-            //row["ShipFromAddress"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromAddress"];
-            //row["ShipFromCity"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromCity"];
-            //row["ShipFromState"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromState"];
-            //row["ShipFromCountry"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromCountry"];
-            //row["ShipFromPostalCode"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromPostalCode"];
-            //row["ShipFromEmail"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromEmail"];
-            //row["ShipFromMobile"] = (string)jsonObject["responseObject"]?["shipFromInfo"]?["shipFromMobile"];
-
-            //// ShipTo Info
-            //row["ShipToName"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToName"];
-            //row["ShipToAddress"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToAddress"];
-            //row["ShipToAddress2"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToAddress2"];
-            //row["ShipToCity"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToCity"];
-            //row["ShipToState"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToState"];
-            //row["ShipToCountry"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToCountry"];
-            //row["PostalCode"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["postalCode"];
-            //row["ShipToEmail"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToEmail"];
-            //row["ShipToMobile"] = (string)jsonObject["responseObject"]?["shipToInfo"]?["shipToMobile"];
-
-            //// BillTo Info
-            //row["BillToName"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToName"];
-            //row["BillToAddress"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToAddress"];
-            //row["BillToAddress2"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToAddress2"];
-            //row["BillToCity"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToCity"];
-            //row["BillToState"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToState"];
-            //row["BillToCountry"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToCountry"];
-            //row["BillToPostalCode"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToPostalCode"];
-            //row["BillToEmail"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToEmail"];
-            //row["BillToMobile"] = (string)jsonObject["responseObject"]?["billToInfo"]?["billToMobile"];
-
-            //SqlContext.Pipe.Send("inserted BillToMobile: " + (string)jsonObject["responseObject"]?["billToInfo"]?["billToMobile"]);
-
-            //trackingData.Rows.Add(row);
-
-
-            SqlContext.Pipe.Send("inserted jsonBody: " + row);
-            //}
+            // Define DataTable columns based on JSON structure
+            // Adding columns with specified properties
+            orderDetailsTransactionTable.Columns.Add("OrderNumber", typeof(string));
+            orderDetailsTransactionTable.Columns.Add("Status", typeof(string));
+            orderDetailsTransactionTable.Columns.Add("CreatedOn", typeof(DateTime));
+            orderDetailsTransactionTable.Columns.Add("UpdatedOn", typeof(DateTime));
+            orderDetailsTransactionTable.Columns.Add("Reason", typeof(string));
+            orderDetailsTransactionTable.Columns.Add("OrderStatusDesc", typeof(string));
+            orderDetailsTransactionTable.Columns.Add("StatusSequence", typeof(int));
+            orderDetailsTransactionTable.Columns.Add("ShipToCity", typeof(string));
+            orderDetailsTransactionTable.Columns.Add("ShipToState", typeof(string));
         }
 
         private static async Task HandleErrorResponse(HttpWebResponse response)
