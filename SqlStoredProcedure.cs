@@ -14,6 +14,8 @@ using API_We_Ship_Express;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Globalization;
+using System.Data.SqlClient;
+using System.Transactions;
 
 namespace WEShipExpress_20241111
 {
@@ -31,7 +33,8 @@ namespace WEShipExpress_20241111
 
             string jsonBodyString = jsonBody.ToString();
 
-            string APIUrl = "https://ws-sandbox.advatix.net/weship-fep/api/v1/OrderTracking/getOrderTrackingv2";
+            //string APIUrl = "https://ws-sandbox.advatix.net/weship-fep/api/v1/OrderTracking/getOrderTrackingv2";
+            string APIUrl = "https://ws.advatix.net/weship-fep/api/v1/OrderTracking/getOrderTrackingv2";
 
             try
             {
@@ -308,7 +311,7 @@ namespace WEShipExpress_20241111
 
                                 // Parse the orderTransactions array
                                 JArray orderTransactions = (JArray)jsonObject["responseObject"]["orderTransactions"];
-                                SendLongMessage("orderTransactions: " + orderTransactions);
+                                //SendLongMessage("orderTransactions: " + orderTransactions);
 
                                 foreach (JObject transaction in orderTransactions)
                                 {
@@ -367,8 +370,12 @@ namespace WEShipExpress_20241111
                     // Define connection string
                     string connString = "Data Source=DESKTOP-FO7B6CB\\SQLEXPRESS01;Initial Catalog=API_Ship_v1;User ID=sample;Password=sample";
 
-                    // Create and open the SQL connection
-                    using (SqlConnection connection = new SqlConnection(connString))
+
+                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required))
+                    {
+
+                        // Create and open the SQL connection
+                        using (SqlConnection connection = new SqlConnection(connString))
                     {
                         connection.Open();
 
@@ -429,9 +436,10 @@ namespace WEShipExpress_20241111
 
                     // Send the response status to SQL context
                     SendLongMessage("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
-                    //SqlContext.Pipe.Send("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
+                        //SqlContext.Pipe.Send("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
 
-
+                        scope.Complete(); // Commit the transaction
+                    }
                 }
                 catch (Exception ex)
                 {
