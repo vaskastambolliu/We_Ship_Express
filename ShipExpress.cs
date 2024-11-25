@@ -95,6 +95,8 @@ namespace API_We_Ship_Express
 
     public class OrderNumber
     {
+        public int idKey { get; set; }
+
         [JsonProperty("id")]
         public string id { get; set; }
     }
@@ -343,6 +345,9 @@ namespace API_We_Ship_Express
 
     public class OrderTransaction
     {
+
+        public int idKey { get; set; }
+
         public string orderNumber { get; set; }
 
         [JsonProperty("status")]

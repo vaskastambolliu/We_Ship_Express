@@ -162,8 +162,6 @@ namespace WEShipExpress_20241111
                             // Create a new DataRow
                             DataRow row = trackingData.NewRow();
 
-                            //// Create a new DataRow for orderTransaction
-                            //DataRow rowTransaction = trackingTransactionData.NewRow();
 
                             // Populate the DataRow with the deserialized data
                             row["Id"] = responseObject.responseObject.orderNumber.id;
@@ -241,8 +239,8 @@ namespace WEShipExpress_20241111
                             //        }
                             //        else
                             //        {
-                            //            throw new Exception("Failed to download file from URL.");
                             //            SendLongMessage("responseurl: Failed to download file from URL.");
+                            //            throw new Exception("Failed to download file from URL.");
                             //        }
                             //    }
                             //}
@@ -320,17 +318,22 @@ namespace WEShipExpress_20241111
                                     DataRow rowTransaction = trackingTransactionData.NewRow();
 
                                     rowTransaction["orderNumber"] = responseObject.responseObject.orderNumber.id;
-                                    rowTransaction["Status"] = (int)transaction["status"];
-                                    rowTransaction["CreatedOn"] = DateTimeOffset.ParseExact((string)transaction["createdOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime;
-                                    rowTransaction["UpdatedOn"] = DateTimeOffset.ParseExact((string)transaction["updatedOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime;
-                                    rowTransaction["Reason"] = (string)transaction["reason"];
-                                    rowTransaction["OrderStatusDesc"] = (string)transaction["orderStatusDesc"];
-                                    rowTransaction["StatusSequence"] = (int)transaction["statusSequence"];
-                                    rowTransaction["ShipToCity"] = (string)transaction["shipToCity"];
-                                    rowTransaction["ShipToState"] = (string)transaction["shipToState"];
+                                    rowTransaction["Status"] = transaction["status"] != null ? (int)transaction["status"] : null;
+                                    rowTransaction["CreatedOn"] = transaction["createdOn"] != null
+                                        ? DateTimeOffset.ParseExact((string)transaction["createdOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime
+                                        : null;
+                                    rowTransaction["UpdatedOn"] = transaction["updatedOn"] != null
+                                        ? DateTimeOffset.ParseExact((string)transaction["updatedOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime
+                                        : null;
+                                    rowTransaction["Reason"] = transaction["reason"] != null ? (string)transaction["reason"] : null;
+                                    rowTransaction["OrderStatusDesc"] = transaction["orderStatusDesc"] != null ? (string)transaction["orderStatusDesc"] : null;
+                                    rowTransaction["StatusSequence"] = transaction["statusSequence"] != null ? (int)transaction["statusSequence"] : null;
+                                    rowTransaction["ShipToCity"] = transaction["shipToCity"] != null ? (string)transaction["shipToCity"] : null;
+                                    rowTransaction["ShipToState"] = transaction["shipToState"] != null ? (string)transaction["shipToState"] : null;
 
                                     // Add the rowTransaction to trackingTransactionData
                                     trackingTransactionData.Rows.Add(rowTransaction);
+
                                 }
 
                             }
@@ -371,75 +374,64 @@ namespace WEShipExpress_20241111
                     string connString = "Data Source=DESKTOP-FO7B6CB\\SQLEXPRESS01;Initial Catalog=API_Ship_v1;User ID=sample;Password=sample";
 
 
-                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required))
+                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                               new TransactionOptions
+                               {
+                                   IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted, // Adjust based on your requirements
+                                   Timeout = TimeSpan.FromMinutes(5) // Set appropriate timeout
+                               }))
                     {
-
-                        // Create and open the SQL connection
                         using (SqlConnection connection = new SqlConnection(connString))
-                    {
-                        connection.Open();
-
-                        // Create a SQL command to execute the stored procedure
-                        using (SqlCommand cmd = new SqlCommand())
                         {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.CommandText = "dbo.WEShipExpress_importData_20241111";
-                            cmd.Connection = connection;
+                            connection.Open();
 
-                            // Define the parameter for the stored procedure
-                            SqlParameter param = new SqlParameter
+                            // Insert into weshipexpresspro_temp_ships
+                            using (SqlCommand cmd = new SqlCommand("dbo.WEShipExpress_importData_20241111", connection))
                             {
-                                ParameterName = "@DataToInsert",
-                                SqlDbType = SqlDbType.Structured,
-                                Value = trackingData,
-                                TypeName = "dbo.weshipexpresspro_temp_ships"
-                            };
-                            cmd.Parameters.Add(param);
+                                cmd.CommandType = CommandType.StoredProcedure;
 
-                            SendLongMessage("param: " + param);
-                            // Execute the stored procedure
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
+                                // Define and add the parameter
+                                SqlParameter param = new SqlParameter
+                                {
+                                    ParameterName = "@DataToInsert",
+                                    SqlDbType = SqlDbType.Structured,
+                                    Value = trackingData,
+                                    TypeName = "dbo.weshipexpresspro_temp_ships"
+                                };
+                                cmd.Parameters.Add(param);
 
-                    // Send the response status to SQL context
-                    SqlContext.Pipe.Send("InsertDataToDatabase in weshipexpresspro_temp_ships: " + response.StatusCode);
+                                SendLongMessage("param: " + param);
+                                cmd.ExecuteNonQuery();
+                            }
 
+                            SendLongMessage("InsertDataToDatabase in weshipexpresspro_temp_ships: " + response.StatusCode);
 
-                    // Create and open the SQL connection
-                    using (SqlConnection connection = new SqlConnection(connString))
-                    {
-                        connection.Open();
-
-                        // Create a SQL command to execute the stored procedure
-                        using (SqlCommand cmd = new SqlCommand())
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.CommandText = "dbo.WEShipExpressTransactions_importData_20241111";
-                            cmd.Connection = connection;
-
-                            // Define the parameter for the stored procedure
-                            SqlParameter param = new SqlParameter
+                            // Insert into weshipexpresspro_temp_shipstransactions
+                            using (SqlCommand cmd = new SqlCommand("dbo.WEShipExpressTransactions_importData_20241111", connection))
                             {
-                                ParameterName = "@DataToInsertTransaction",
-                                SqlDbType = SqlDbType.Structured,
-                                Value = trackingTransactionData,
-                                TypeName = "dbo.weshipexpresspro_temp_shipstransactions"
-                            };
-                            cmd.Parameters.Add(param);
+                                cmd.CommandType = CommandType.StoredProcedure;
 
-                            SendLongMessage("param: " + param);
-                            // Execute the stored procedure
-                            cmd.ExecuteNonQuery();
+                                // Define and add the parameter
+                                SqlParameter param = new SqlParameter
+                                {
+                                    ParameterName = "@DataToInsertTransaction",
+                                    SqlDbType = SqlDbType.Structured,
+                                    Value = trackingTransactionData,
+                                    TypeName = "dbo.weshipexpresspro_temp_shipstransactions"
+                                };
+                                cmd.Parameters.Add(param);
+
+                                SendLongMessage("param: " + param);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            SendLongMessage("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
                         }
+
+                        // Complete the transaction
+                        scope.Complete();
                     }
 
-                    // Send the response status to SQL context
-                    SendLongMessage("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
-                        //SqlContext.Pipe.Send("InsertDataToDatabase in weshipexpresspro_temp_shipstransactions: " + response.StatusCode);
-
-                        scope.Complete(); // Commit the transaction
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -470,6 +462,18 @@ namespace WEShipExpress_20241111
         {
             // Define DataTable columns based on JSON structure
             // Adding columns with specified properties
+
+
+            // Define the "IdKey" column as an auto-incrementing integer
+            DataColumn idKeyColumn = new DataColumn("IdKey", typeof(int))
+            {
+                AutoIncrement = true,
+                AutoIncrementSeed = 1, // Starting value for the identity
+                AutoIncrementStep = 1  // Increment step
+            };
+            // Add the column to the DataTable
+            orderDetailsTable.Columns.Add(idKeyColumn);
+
             orderDetailsTable.Columns.Add("Id", typeof(string));
             orderDetailsTable.Columns.Add("CreatedOn", typeof(long));
             orderDetailsTable.Columns.Add("UpdatedOn", typeof(long));
@@ -568,6 +572,16 @@ namespace WEShipExpress_20241111
         {
             // Define DataTable columns based on JSON structure
             // Adding columns with specified properties
+            // Define the "IdKey" column as an auto-incrementing integer
+            //DataColumn idKeyColumn = new DataColumn("IdKey", typeof(int))
+            //{
+            //    AutoIncrement = true,
+            //    AutoIncrementSeed = 1, // Starting value for the identity
+            //    AutoIncrementStep = 1  // Increment step
+            //};
+            //// Add the column to the DataTable
+            //orderDetailsTransactionTable.Columns.Add(idKeyColumn);
+
             orderDetailsTransactionTable.Columns.Add("OrderNumber", typeof(string));
             orderDetailsTransactionTable.Columns.Add("Status", typeof(string));
             orderDetailsTransactionTable.Columns.Add("CreatedOn", typeof(DateTime));

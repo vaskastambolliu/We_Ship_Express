@@ -86,6 +86,6 @@
     <None Include="lib\Newtonsoft.Json.xml" />
     <None Include="lib\System.Runtime.Serialization.Json.dll" />
     <None Include="lib\System.ServiceModel.Internals.dll" />
-    <None Include="sqltest.txt" />
+    <None Include="sqltest.sql" />
   </ItemGroup>
 </Project>
