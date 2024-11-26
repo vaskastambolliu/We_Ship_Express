@@ -317,19 +317,14 @@ namespace WEShipExpress_20241111
                                     // Create a new DataRow for orderTransaction
                                     DataRow rowTransaction = trackingTransactionData.NewRow();
 
-                                    rowTransaction["orderNumber"] = responseObject.responseObject.orderNumber.id;
-                                    rowTransaction["Status"] = transaction["status"] != null ? (int)transaction["status"] : null;
-                                    rowTransaction["CreatedOn"] = transaction["createdOn"] != null
-                                        ? DateTimeOffset.ParseExact((string)transaction["createdOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime
-                                        : null;
-                                    rowTransaction["UpdatedOn"] = transaction["updatedOn"] != null
-                                        ? DateTimeOffset.ParseExact((string)transaction["updatedOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime
-                                        : null;
-                                    rowTransaction["Reason"] = transaction["reason"] != null ? (string)transaction["reason"] : null;
-                                    rowTransaction["OrderStatusDesc"] = transaction["orderStatusDesc"] != null ? (string)transaction["orderStatusDesc"] : null;
-                                    rowTransaction["StatusSequence"] = transaction["statusSequence"] != null ? (int)transaction["statusSequence"] : null;
-                                    rowTransaction["ShipToCity"] = transaction["shipToCity"] != null ? (string)transaction["shipToCity"] : null;
-                                    rowTransaction["ShipToState"] = transaction["shipToState"] != null ? (string)transaction["shipToState"] : null;
+                                    rowTransaction["Status"] = (int)transaction["status"];
+                                    rowTransaction["CreatedOn"] = DateTimeOffset.ParseExact((string)transaction["createdOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime;
+                                    rowTransaction["UpdatedOn"] = DateTimeOffset.ParseExact((string)transaction["updatedOn"], "MM-dd-yyyy HH:mm:ss fff zzz", CultureInfo.InvariantCulture).DateTime;
+                                    rowTransaction["Reason"] = (string)transaction["reason"];
+                                    rowTransaction["OrderStatusDesc"] = (string)transaction["orderStatusDesc"];
+                                    rowTransaction["StatusSequence"] = (int)transaction["statusSequence"];
+                                    rowTransaction["ShipToCity"] = (string)transaction["shipToCity"];
+                                    rowTransaction["ShipToState"] = (string)transaction["shipToState"];
 
                                     // Add the rowTransaction to trackingTransactionData
                                     trackingTransactionData.Rows.Add(rowTransaction);
