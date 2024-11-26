@@ -14,7 +14,6 @@ using API_We_Ship_Express;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Globalization;
-using System.Data.SqlClient;
 using System.Transactions;
 
 namespace WEShipExpress_20241111
@@ -299,6 +298,7 @@ namespace WEShipExpress_20241111
                             row["SkuGroup"] = responseObject.responseObject.skuGroup;
                             row["Fulfilment"] = responseObject.responseObject.fulfilment;
 
+
                             // Add the DataRow to the DataTable
                             trackingData.Rows.Add(row);
 
@@ -325,6 +325,7 @@ namespace WEShipExpress_20241111
                                     rowTransaction["StatusSequence"] = (int)transaction["statusSequence"];
                                     rowTransaction["ShipToCity"] = (string)transaction["shipToCity"];
                                     rowTransaction["ShipToState"] = (string)transaction["shipToState"];
+
 
                                     // Add the rowTransaction to trackingTransactionData
                                     trackingTransactionData.Rows.Add(rowTransaction);
@@ -568,14 +569,16 @@ namespace WEShipExpress_20241111
             // Define DataTable columns based on JSON structure
             // Adding columns with specified properties
             // Define the "IdKey" column as an auto-incrementing integer
-            //DataColumn idKeyColumn = new DataColumn("IdKey", typeof(int))
-            //{
-            //    AutoIncrement = true,
-            //    AutoIncrementSeed = 1, // Starting value for the identity
-            //    AutoIncrementStep = 1  // Increment step
-            //};
-            //// Add the column to the DataTable
-            //orderDetailsTransactionTable.Columns.Add(idKeyColumn);
+            DataColumn idKeyColumn = new DataColumn("IdKey", typeof(int))
+            {
+                AutoIncrement = true,
+                AutoIncrementSeed = 1, // Starting value for the identity
+                AutoIncrementStep = 1  // Increment step
+            };
+            // Add the column to the DataTable
+            orderDetailsTransactionTable.Columns.Add(idKeyColumn);
+
+            //orderDetailsTransactionTable.Columns.Add("IdKey", typeof(int));
 
             orderDetailsTransactionTable.Columns.Add("OrderNumber", typeof(string));
             orderDetailsTransactionTable.Columns.Add("Status", typeof(string));
